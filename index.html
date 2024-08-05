@@ -1,45 +1,48 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebSocket Test</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zoom App</title>
 </head>
 <body>
-    <h1>WebSocket Test</h1>
+  <div id="chat-container">
     <div id="messages"></div>
-    <input type="text" id="messageInput" placeholder="Type a message...">
+    <input type="text" id="message-input" placeholder="Type a message">
     <button onclick="sendMessage()">Send</button>
+  </div>
 
-    <script>
-        const socket = new WebSocket('ws://localhost:8080');
+  <script>
+    const ws = new WebSocket(`ws://${window.location.host}`);
 
-        socket.addEventListener('open', (event) => {
-            console.log('Connected to WebSocket server');
-        });
+    ws.onopen = () => {
+      console.log('WebSocket connection established');
+    };
 
-        socket.addEventListener('message', (event) => {
-            const message = event.data;
-            displayMessage(message);
-        });
+    ws.onmessage = async (event) => {
+      const messages = document.getElementById('messages');
+      const message = document.createElement('div');
 
-        socket.addEventListener('close', (event) => {
-            console.log('Disconnected from WebSocket server');
-        });
+      // Blob을 텍스트로 변환
+      if (event.data instanceof Blob) {
+        const text = await event.data.text();
+        message.textContent = text;
+      } else {
+        message.textContent = event.data;
+      }
 
-        function displayMessage(message) {
-            const messageContainer = document.getElementById('messages');
-            const messageElement = document.createElement('div');
-            messageElement.textContent = message;
-            messageContainer.appendChild(messageElement);
-        }
+      messages.appendChild(message);
+    };
 
-        function sendMessage() {
-            const input = document.getElementById('messageInput');
-            const message = input.value;
-            socket.send(message);
-            input.value = '';
-        }
-    </script>
+    ws.onclose = () => {
+      console.log('WebSocket connection closed');
+    };
+
+    function sendMessage() {
+      const input = document.getElementById('message-input');
+      ws.send(input.value);
+      input.value = '';
+    }
+  </script>
 </body>
 </html>
